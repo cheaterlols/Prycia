@@ -3,6 +3,7 @@ package me.vrekt.prycia.util;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import me.vrekt.prycia.Prycia;
 import me.vrekt.prycia.checks.CheckType;
 
 public class Config {
@@ -85,4 +86,25 @@ public class Config {
 		return false;
 	}
 
+	public void writeValues() {
+
+		for (CheckType ct : CheckType.values()) {
+			String name = ct.toString().toLowerCase();
+
+			boolean enabled = Prycia.getPlugin().getConfig().getBoolean(name + ".enabled");
+			boolean autoban = Prycia.getPlugin().getConfig().getBoolean(name + ".enabled.auto_ban");
+			boolean cancel = Prycia.getPlugin().getConfig().getBoolean(name + ".enabled.auto_ban.cancel");
+			int threshold = Prycia.getPlugin().getConfig().getInt(name + ".enabled.auto_ban.cancel.threshold");
+
+			if (ct.equals(CheckType.REGENERATION)) {
+				setRegenMode(Prycia.getPlugin().getConfig().getBoolean(name + ".enabled.auto_ban.cancel.threshold.event_check"),
+						Prycia.getPlugin().getConfig().getBoolean(name + ".enabled.auto_ban.cancel.threshold.event_check.packet_check"));
+			}
+
+			setCheckEnabled(ct, enabled);
+			setCheckBannable(ct, autoban);
+			setCheckCancellable(ct, cancel);
+			setCheckThreshold(ct, threshold);
+		}
+	}
 }

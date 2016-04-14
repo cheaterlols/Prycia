@@ -8,6 +8,7 @@ import me.vrekt.prycia.checks.fight.Criticals;
 import me.vrekt.prycia.checks.fight.Reach;
 import me.vrekt.prycia.checks.fight.Regeneration;
 import me.vrekt.prycia.checks.inventory.FastConsume;
+import me.vrekt.prycia.checks.moving.Phase;
 import me.vrekt.prycia.checks.moving.Speed;
 
 public class CheckManager {
@@ -22,7 +23,10 @@ public class CheckManager {
 		addCheck(new Regeneration());
 		addCheck(new Criticals());
 		addCheck(new Reach());
+		addCheck(new Phase());
 		addCheck(new Speed());
+	
+		
 	}
 
 	// Get the check thats related to the check-type.
@@ -68,4 +72,8 @@ public class CheckManager {
 		allChecks.put(check.getClass(), check);
 	}
 
+	public HashMap<Class, Check> getAllChecks() {
+		return allChecks;
+	}
+	
 }

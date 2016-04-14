@@ -9,7 +9,9 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffectType;
+import org.bukkit.util.Vector;
 
+import me.vrekt.prycia.user.User;
 import me.vrekt.prycia.util.permission.Permission;
 
 public class Utilities {
@@ -118,6 +120,21 @@ public class Utilities {
 	public static boolean canCrit(Player player) {
 		return !isOnClimbable(player.getLocation()) && !player.isInsideVehicle() && !inLiquid(player.getLocation()) && !player.hasPotionEffect(PotionEffectType.BLINDNESS);
 
+	}
+
+	public static boolean canPass(Material mat) {
+		return mat == Material.WATER || mat == Material.LAVA || mat == Material.STATIONARY_LAVA || mat == Material.STATIONARY_WATER || mat == Material.FENCE_GATE || mat == Material.ACACIA_FENCE_GATE
+				|| mat == Material.SPRUCE_DOOR || mat == Material.DARK_OAK_DOOR || mat == Material.ACACIA_FENCE || mat == Material.BIRCH_DOOR || mat == Material.BIRCH_FENCE_GATE
+				|| mat == Material.DARK_OAK_FENCE || mat == Material.JUNGLE_FENCE_GATE || mat == Material.IRON_FENCE || mat == Material.SPRUCE_FENCE_GATE || mat == Material.AIR
+				|| mat == Material.WOOD_DOOR || mat == Material.WOODEN_DOOR || mat == Material.BED_BLOCK || mat == Material.BED || mat == Material.CHEST;
+	}
+	
+	public static boolean isValidLocation(User user, Location loc){
+		Vector v = user.getPreviousLocation().toVector();
+		Vector v2 = loc.toVector();
+		
+		return isOnGround(loc) && !v2.isInAABB(v, v2);
+		
 	}
 
 }

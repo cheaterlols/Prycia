@@ -1,5 +1,6 @@
 package me.vrekt.prycia.net.listeners;
 
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
 import com.comphenix.packetwrapper.WrapperPlayClientPosition;
@@ -8,10 +9,9 @@ import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 
 import me.vrekt.prycia.Prycia;
-import me.vrekt.prycia.checks.CheckType;
-import me.vrekt.prycia.checks.fight.Criticals;
 import me.vrekt.prycia.net.Adapter;
 import me.vrekt.prycia.user.User;
+import me.vrekt.prycia.util.Utilities;
 
 public class PositionAdapter extends Adapter {
 
@@ -26,18 +26,9 @@ public class PositionAdapter extends Adapter {
 		User user = Prycia.getUserManager().getUser(player.getUniqueId());
 		WrapperPlayClientPosition positionPacket = new WrapperPlayClientPosition(packet);
 
-		double yDiff = positionPacket.getY() - player.getLocation().getBlockY();
-		double yFallDiff = player.getFallDistance();
-
-		if (user.shouldCheck(CheckType.CRITICALS) && !positionPacket.getOnGround()) {
-			Criticals checkInstance = (Criticals) Prycia.getCheckManager().getCheck(Criticals.class);
-			if (yDiff != 0 && !(yDiff < 0)) {
-				checkInstance.check(user, yDiff);
-			} else if (yDiff == 0) {
-				if (yFallDiff != 0) {
-					checkInstance.check(user, yFallDiff);
-				}
-			}
+		Location loc = new Location(player.getWorld(), positionPacket.getX(), positionPacket.getY(), positionPacket.getZ());
+		if (user.getPreviousLocation() == null || Utilities.get3DSquared(user.getPreviousLocation(), loc) >= 4) {
+			user.setPreviousLocation(loc);
 		}
 
 	}

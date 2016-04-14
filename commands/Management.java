@@ -11,6 +11,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import me.vrekt.prycia.Prycia;
+import me.vrekt.prycia.user.User;
 import net.md_5.bungee.api.ChatColor;
 
 public class Management implements CommandExecutor {
@@ -27,8 +28,13 @@ public class Management implements CommandExecutor {
 			sender.sendMessage("You must be an in-game player to execute this command.");
 			return false;
 		}
+		
+		if(!sender.hasPermission("prycia_staff")){
+			return false;
+		}
 
 		Player player = (Player) sender;
+		User user = Prycia.getUserManager().getUser(player.getUniqueId());
 		Inventory gui = Bukkit.createInventory(null, 27, "Prycia");
 		ItemStack book = new ItemStack(Material.BOOK, 1);
 		ItemStack paper = new ItemStack(Material.PAPER, 1);
@@ -36,7 +42,7 @@ public class Management implements CommandExecutor {
 		ItemStack pane = new ItemStack(Material.STAINED_GLASS_PANE, 1, (byte) 14);
 
 		text = Prycia.getManager().isEnabled() ? ChatColor.GREEN + "enabled." : ChatColor.RED + "disabled.";
-		dtext = Prycia.getManager().isDebuggingEnabled() ? ChatColor.GREEN + "enabled." : ChatColor.RED + "disabled.";
+		dtext = user.getWillDebug() ? ChatColor.GREEN + "enabled." : ChatColor.RED + "disabled.";
 		ItemMeta metaBook = book.getItemMeta();
 		ItemMeta metaPaper = paper.getItemMeta();
 		ItemMeta metaBarrier = barrier.getItemMeta();

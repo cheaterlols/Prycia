@@ -70,24 +70,28 @@ public abstract class Check {
 		this.result = result;
 	}
 
+	public void setEnabled(boolean enabled){
+		this.isEnabled = enabled;
+	}
+	
 	public void executeActions(Player player, User user, String tag) {
 
-		boolean debugLogging = Prycia.getManager().isDebuggingEnabled;
+		boolean debugLogging = user.getWillDebug();
 		int currentThreshold = user.getViolationLevel(getCheck());
 
 		String checkName = getCheck().toString().toLowerCase();
 		checkName = StringUtils.capitalize(checkName);
-		
-		if(getCheck().equals(CheckType.FAST_CONSUME)){
+
+		if (getCheck().equals(CheckType.FAST_CONSUME)) {
 			// Fix the _ and format it to FastConsume.
 			checkName = checkName.replace("_", "");
 			checkName = checkName.replace("c", "C");
 		}
-		
+
 		if (debugLogging) {
-			Utilities.logMessage(player.getName() + " is using: §3" + checkName + "\n " + ChatColor.GRAY + tag);
+			Utilities.logMessage(player.getName() + " could possibly be using: §3" + checkName + "\n " + ChatColor.GRAY + tag);
 		} else {
-			Utilities.logMessage(player.getName() + " is using: §3" + checkName);
+			Utilities.logMessage(player.getName() + " could possible be using: §3" + checkName);
 		}
 
 		if (currentThreshold == 0) {
@@ -98,7 +102,7 @@ public abstract class Check {
 
 		if (isMet(user) && !Prycia.getManager().isInBanQueue(user)) {
 			user.setViolationLevel(getCheck(), 0);
-			//Prycia.getManager().scheduleBan(user);
+			// Prycia.getManager().scheduleBan(user);
 		}
 
 		if (getCategory().equals(Category.MOVING)) {

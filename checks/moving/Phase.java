@@ -7,13 +7,13 @@ import me.vrekt.prycia.checks.Check;
 import me.vrekt.prycia.checks.CheckType;
 import me.vrekt.prycia.user.User;
 
-public class Speed extends Check {
+public class Phase extends Check {
 
-	public Speed() {
-		super(Category.MOVING, CheckType.SPEED, "Checks if the player is moving to quickly.");
+	public Phase() {
+		super(Category.MOVING, CheckType.PHASE, "Checks if the player is clipping inside blocks.");
 	}
 
-	public boolean check(User user, Location to, Location from) {
+	public boolean check(User user, Location current) {
 
 		return false;
 

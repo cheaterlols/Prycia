@@ -3,6 +3,7 @@ package me.vrekt.prycia.events;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -18,49 +19,44 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
-import org.bukkit.event.player.PlayerVelocityEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import me.vrekt.prycia.Prycia;
+import me.vrekt.prycia.checks.Category;
+import me.vrekt.prycia.checks.Check;
 import me.vrekt.prycia.checks.CheckType;
 import me.vrekt.prycia.checks.fight.Reach;
 import me.vrekt.prycia.checks.fight.Regeneration;
 import me.vrekt.prycia.checks.inventory.FastConsume;
-import me.vrekt.prycia.checks.moving.Speed;
 import me.vrekt.prycia.user.User;
-import me.vrekt.prycia.util.Utilities;
 import net.md_5.bungee.api.ChatColor;
 
 public class PlayerListener implements Listener {
 
-	private int last = 0;
-
 	// When the player moves we check many things here.
+
+	private final Inventory categoryInventory = Bukkit.createInventory(null, 27, ChatColor.DARK_GRAY + "Prycia Categories.");
+	private final Inventory fightInventory = Bukkit.createInventory(null, 9, ChatColor.RED + "Prycia Checks. [Fight]");
+	private final Inventory movementInventory = Bukkit.createInventory(null, 9, ChatColor.BLUE + "Prycia Checks. [Movement]");
+	private final Inventory invInventory = Bukkit.createInventory(null, 9, ChatColor.GREEN + "Prycia Checks. [Inventory]");
 
 	@EventHandler(priority = EventPriority.LOWEST)
 	public void onPlayerMove(PlayerMoveEvent event) {
-
 		Player player = event.getPlayer();
 		User user = Prycia.getUserManager().getUser(player.getUniqueId());
 		Location from = event.getFrom();
 		Location to = event.getTo();
 
 		user.setPlayer(player);
-		user.setPreviousLocation(from);
 
 		if (from.getBlockX() != to.getBlockX() || from.getBlockY() != to.getBlockY() || from.getBlockZ() != to.getBlockZ()) {
-			// Do speed checks here and other movement memes.
-			if (!Utilities.isMovingExempt(player)) {
-				Speed speedCheck = (Speed) Prycia.getCheckManager().getCheck(Speed.class);
-				speedCheck.check(user, to, from);
-			}
+
 		}
 
 	}
@@ -78,15 +74,7 @@ public class PlayerListener implements Listener {
 	@EventHandler
 	public void onQuit(PlayerQuitEvent event) {
 		User user = Prycia.getUserManager().getUser(event.getPlayer().getUniqueId());
-		user.setFieldsNull();
-		Prycia.getUserManager().remove(user);
-		user = null;
-	}
-
-	@EventHandler
-	public void onKick(PlayerKickEvent event) {
-		User user = Prycia.getUserManager().getUser(event.getPlayer().getUniqueId());
-		user.setFieldsNull();
+		user.clearData();
 		Prycia.getUserManager().remove(user);
 		user = null;
 	}
@@ -101,67 +89,188 @@ public class PlayerListener implements Listener {
 	// TODO: Cleanup.
 
 	@EventHandler
-	public void onInventoryClick(InventoryClickEvent e) {
+	public void onInventoryClick(InventoryClickEvent event) {
 
-		User user = Prycia.getUserManager().getUser(e.getWhoClicked().getUniqueId());
+		// Check if the name is related to prycia.
 
-		if (e.getClickedInventory() == null || !e.getClickedInventory().getName().contains("Prycia")) {
+		if (!event.getInventory().getName().contains("Prycia")) {
 			return;
 		}
 
-		if (e.getCurrentItem().getType().equals(Material.STAINED_GLASS_PANE) || e.getCurrentItem().getType().equals(Material.GREEN_RECORD)) {
-			e.setCancelled(true);
+		if (event.getCurrentItem() == null) {
+			return;
 		}
 
-		if (e.getCurrentItem().getType() == Material.BOOK) {
-			e.setCancelled(true);
-			Inventory gui = Bukkit.createInventory(null, 18, "Prycia - Checks");
-			ItemStack checkItem = new ItemStack(Material.GREEN_RECORD, 1);
-			ItemMeta meta = checkItem.getItemMeta();
+		Player player = (Player) event.getWhoClicked();
+		User user = Prycia.getUserManager().getUser(player.getUniqueId());
 
-			for (CheckType ct : CheckType.values()) {
-				String name = ct.toString();
-				List<String> lore = new ArrayList<String>();
-				lore.add(Prycia.getCheckManager().getDescription(ct));
-				meta.setDisplayName(ChatColor.RED + name);
-				meta.setLore(lore);
-				meta.addItemFlags(ItemFlag.values());
-				checkItem.setItemMeta(meta);
-				gui.setItem(last++, checkItem);
-				if (last == CheckType.values().length) {
-					last = 0;
+		ItemStack stackItem = event.getCurrentItem();
+		ItemMeta stackMeta = event.getCurrentItem().getItemMeta();
+		Material clickedItem = event.getCurrentItem().getType();
+
+		// Check if player clicked a barrier.
+
+		if (clickedItem == Material.BARRIER) {
+			event.setCancelled(true);
+			Prycia.getManager().setIsEnabled(!Prycia.getManager().isEnabled());
+			String text = Prycia.getManager().isEnabled() ? ChatColor.GREEN + "enabled." : ChatColor.RED + "disabled.";
+			stackMeta.setDisplayName(ChatColor.RED + "Enable or disable the anticheat, currently " + text);
+			stackItem.setItemMeta(stackMeta);
+
+			// TODO: Add the code to where it actually disables the anticheat.
+			// TODO: Still more things to do for this to work. gotta code it
+			// l8ter on.
+
+		}
+
+		if (stackMeta.getDisplayName().contains("Invalid Action")) {
+			event.setCancelled(true);
+		}
+		
+		if(clickedItem == Material.RECORD_8){
+			event.setCancelled(true);
+		}
+
+		if (clickedItem == Material.PAPER) {
+			event.setCancelled(true);
+			user.setWillDebug(!user.getWillDebug());
+			String text = user.getWillDebug() ? ChatColor.GREEN + "enabled." : ChatColor.RED + "disabled.";
+			ItemMeta meta = stackItem.getItemMeta();
+			meta.setDisplayName(ChatColor.RED + "Enable or disable debug logging, currently " + text);
+			stackItem.setItemMeta(meta);
+		}
+
+		if (clickedItem == Material.BOOK) {
+			event.setCancelled(true);
+
+			// Populate the next inventory with the categories.
+
+			ItemStack pane = new ItemStack(Material.STAINED_GLASS_PANE, 1, (byte) 15);
+			ItemStack fight = new ItemStack(Material.STAINED_GLASS_PANE, 1, (byte) 14);
+			ItemStack moving = new ItemStack(Material.STAINED_GLASS_PANE, 1, (byte) 11);
+			ItemStack inventory = new ItemStack(Material.STAINED_GLASS_PANE, 1, (byte) 5);
+
+			ItemMeta paneMeta = pane.getItemMeta();
+			ItemMeta fightMeta = fight.getItemMeta();
+			ItemMeta movingMeta = moving.getItemMeta();
+			ItemMeta inventoryMeta = inventory.getItemMeta();
+
+			paneMeta.setDisplayName(ChatColor.LIGHT_PURPLE + "Invalid Action.");
+			fightMeta.setDisplayName(ChatColor.RED + "Fight");
+			movingMeta.setDisplayName(ChatColor.BLUE + "Movement");
+			inventoryMeta.setDisplayName(ChatColor.GREEN + "Inventory");
+
+			pane.setItemMeta(paneMeta);
+			fight.setItemMeta(fightMeta);
+			moving.setItemMeta(movingMeta);
+			inventory.setItemMeta(inventoryMeta);
+
+			for (int i = 0; i < categoryInventory.getSize(); i++) {
+				categoryInventory.setItem(i, pane);
+			}
+
+			categoryInventory.setItem(11, fight);
+			categoryInventory.setItem(13, moving);
+			categoryInventory.setItem(15, inventory);
+			player.openInventory(categoryInventory);
+		}
+
+		String categoryName = stackMeta.getDisplayName();
+		if (categoryName.contains("Fight")) {
+			event.setCancelled(true);
+			fightInventory.clear();
+			for (Check c : Prycia.getCheckManager().getAllChecks().values()) {
+				if (c.getCategory() == Category.FIGHT) {
+
+					String name = c.getCheck().toString().toLowerCase();
+					name = StringUtils.capitalize(name);
+
+					ItemStack item = new ItemStack(Material.RECORD_8, 1);
+					ItemMeta meta = item.getItemMeta();
+					meta.addItemFlags(ItemFlag.values());
+					meta.setDisplayName(ChatColor.RED + name);
+					List<String> lore = new ArrayList<String>();
+					lore.add(ChatColor.DARK_PURPLE + c.getDesc());
+					meta.setLore(lore);
+					item.setItemMeta(meta);
+					
+					for (int i = 0; i < 9; i++) {
+						if(fightInventory.getItem(i) == null){
+							fightInventory.setItem(i, item);
+							break;
+						}
+					}
+
 				}
 			}
+			player.openInventory(fightInventory);
+		}
 
-			e.getWhoClicked().openInventory(gui);
+		if (categoryName.contains("Movement")) {
+			event.setCancelled(true);
+			movementInventory.clear();
+			for (Check c : Prycia.getCheckManager().getAllChecks().values()) {
+				if (c.getCategory() == Category.MOVING) {
 
-		} else if (e.getCurrentItem().getType().equals(Material.BARRIER)) {
-			e.setCancelled(true);
-			Prycia.getManager().isEnabled = !Prycia.getManager().isEnabled();
+					String name = c.getCheck().toString().toLowerCase();
+					name = StringUtils.capitalize(name);
 
-			Inventory gui = e.getInventory();
-			ItemStack item = gui.getItem(13);
-			ItemMeta meta = item.getItemMeta();
-			String text = Prycia.getManager().isEnabled() ? ChatColor.GREEN + "enabled." : ChatColor.RED + "disabled.";
-			meta.setDisplayName(ChatColor.RED + "Enable or disable the anticheat, currently " + text);
-			item.setItemMeta(meta);
+					ItemStack item = new ItemStack(Material.RECORD_8, 1);
+					ItemMeta meta = item.getItemMeta();
+					meta.addItemFlags(ItemFlag.values());
+					meta.setDisplayName(ChatColor.RED + name);
+					List<String> lore = new ArrayList<String>();
+					lore.add(ChatColor.DARK_PURPLE + c.getDesc());
+					meta.setLore(lore);
+					item.setItemMeta(meta);
 
-			if (Prycia.getManager().isEnabled()) {
-				// TODO: remove packet listeners here.
-			} else {
-				// TODO: Enable packet lsiteners here.
+					for (int i = 0; i < 9; i++) {
+						if (movementInventory.getItem(i) == null) {
+							movementInventory.setItem(i, item);
+							break;
+						}
+					}
+
+				}
 			}
+			player.openInventory(movementInventory);
+		}
 
-		} else if (e.getCurrentItem().getType().equals(Material.PAPER)) {
-			e.setCancelled(true);
-			Prycia.getManager().isDebuggingEnabled = !Prycia.getManager().isDebuggingEnabled();
-			Inventory gui = e.getInventory();
-			ItemStack item = gui.getItem(16);
-			ItemMeta meta = item.getItemMeta();
-			String text = Prycia.getManager().isDebuggingEnabled() ? ChatColor.GREEN + "enabled." : ChatColor.RED + "disabled.";
-			meta.setDisplayName(ChatColor.RED + "Enable or disable debug logging, currently " + text);
-			item.setItemMeta(meta);
-			user.setWillDebug(Prycia.getManager().isDebuggingEnabled());
+		if (categoryName.contains("Inventory")) {
+			event.setCancelled(true);
+			invInventory.clear();
+			for (Check c : Prycia.getCheckManager().getAllChecks().values()) {
+				if (c.getCategory() == Category.INVENTORY) {
+
+					String name = c.getCheck().toString().toLowerCase();
+					name = StringUtils.capitalize(name);
+					// Check if the check is FastConsume. if so fix the name.
+
+					if (c.getCheck() == CheckType.FAST_CONSUME) {
+						name = name.replace("_", "");
+						name = name.replace("c", "C");
+						StringUtils.capitalize(name);
+					}
+
+					ItemStack item = new ItemStack(Material.RECORD_8, 1);
+					ItemMeta meta = item.getItemMeta();
+					meta.addItemFlags(ItemFlag.values());
+					meta.setDisplayName(ChatColor.RED + name);
+					List<String> lore = new ArrayList<String>();
+					lore.add(ChatColor.DARK_PURPLE + c.getDesc());
+					meta.setLore(lore);
+					item.setItemMeta(meta);
+
+					for (int i = 0; i < 9; i++) {
+						if (invInventory.getItem(i) == null ) {
+							invInventory.setItem(i, item);
+							break;
+						}
+					}
+
+				}
+			}
+			player.openInventory(invInventory);
 		}
 
 	}
@@ -183,7 +292,7 @@ public class PlayerListener implements Listener {
 	@EventHandler
 	public void onInteract(PlayerInteractEvent event) {
 		if (event.getAction() == Action.RIGHT_CLICK_BLOCK || event.getAction() == Action.RIGHT_CLICK_AIR) {
-			if (event.getItem().getType().isEdible()) {
+			if (event.getItem() != null && event.getItem().getType().isEdible()) {
 				User user = Prycia.getUserManager().getUser(event.getPlayer().getUniqueId());
 				user.setLastUseTime(System.currentTimeMillis());
 			}
@@ -205,19 +314,11 @@ public class PlayerListener implements Listener {
 
 		User user = Prycia.getUserManager().getUser(event.getEntity().getUniqueId());
 		Regeneration checkInstance = (Regeneration) Prycia.getCheckManager().getCheck(Regeneration.class);
-		boolean result = checkInstance.check(user, false);
+		boolean result = checkInstance.check(user);
 		event.setCancelled(result);
 
 		user.setLastRegenerationTime(System.currentTimeMillis());
-
-	}
-
-	@EventHandler
-	public void onVelocity(PlayerVelocityEvent event) {
-		User user = Prycia.getUserManager().getUser(event.getPlayer().getUniqueId());
-
-		user.setVelocity(event.getVelocity());
-
+		
 	}
 
 	@EventHandler

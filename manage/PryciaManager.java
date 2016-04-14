@@ -14,7 +14,6 @@ import net.md_5.bungee.api.ChatColor;
 
 public class PryciaManager {
 
-	public boolean isDebuggingEnabled = false;
 	public boolean isEnabled = true;
 	private ArrayList<User> userBanQueue = new ArrayList<User>();
 	// schedule a ban for a player.
@@ -45,12 +44,10 @@ public class PryciaManager {
 		return isEnabled;
 	}
 
-	// is debugging enabled?
-
-	public boolean isDebuggingEnabled() {
-		return isDebuggingEnabled;
+	public void setIsEnabled(boolean e){
+		isEnabled = e;
 	}
-
+	
 	// Is a user scheduled for a ban?
 
 	public boolean isInBanQueue(User user) {

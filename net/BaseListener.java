@@ -19,7 +19,7 @@ public class BaseListener {
 			@Override
 			public void onPacketReceiving(PacketEvent event) {
 				if (event.getPacketType() == PacketType.Play.Client.POSITION) {
-					Prycia.getPacketManager().fireAdapter(event.getPacketType(), event);
+					Prycia.getAdapterManager().fireAdapter(event.getPacketType(), event);
 				}
 			}
 
@@ -29,7 +29,7 @@ public class BaseListener {
 			@Override
 			public void onPacketReceiving(PacketEvent event) {
 				if (event.getPacketType() == PacketType.Play.Client.ENTITY_ACTION) {
-					Prycia.getPacketManager().fireAdapter(event.getPacketType(), event);
+					Prycia.getAdapterManager().fireAdapter(event.getPacketType(), event);
 				}
 			}
 		});
@@ -38,7 +38,7 @@ public class BaseListener {
 			@Override
 			public void onPacketReceiving(PacketEvent event) {
 				if (event.getPacketType() == PacketType.Play.Client.BLOCK_PLACE) {
-					Prycia.getPacketManager().fireAdapter(event.getPacketType(), event);
+					Prycia.getAdapterManager().fireAdapter(event.getPacketType(), event);
 				}
 			}
 		});
@@ -47,7 +47,7 @@ public class BaseListener {
 			@Override
 			public void onPacketReceiving(PacketEvent event) {
 				if (event.getPacketType() == PacketType.Play.Client.FLYING) {
-					Prycia.getPacketManager().fireAdapter(event.getPacketType(), event);
+					Prycia.getAdapterManager().fireAdapter(event.getPacketType(), event);
 				}
 			}
 		});
@@ -56,7 +56,7 @@ public class BaseListener {
 			@Override
 			public void onPacketReceiving(PacketEvent event) {
 				if (event.getPacketType() == PacketType.Play.Client.USE_ENTITY) {
-					Prycia.getPacketManager().fireAdapter(event.getPacketType(), event);
+					Prycia.getAdapterManager().fireAdapter(event.getPacketType(), event);
 				}
 			}
 		});

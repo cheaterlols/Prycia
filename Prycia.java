@@ -8,21 +8,26 @@ import org.bukkit.plugin.java.JavaPlugin;
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
 
-import me.vrekt.prycia.checks.CheckType;
 import me.vrekt.prycia.commands.CCBan;
 import me.vrekt.prycia.commands.Management;
+import me.vrekt.prycia.commands.PReload;
 import me.vrekt.prycia.events.PlayerListener;
 import me.vrekt.prycia.manage.CheckManager;
-import me.vrekt.prycia.manage.PacketManager;
+import me.vrekt.prycia.manage.AdapterManager;
 import me.vrekt.prycia.manage.PryciaManager;
+import me.vrekt.prycia.manage.UserManager;
 import me.vrekt.prycia.net.BaseListener;
 import me.vrekt.prycia.user.User;
-import me.vrekt.prycia.user.UserManager;
 import me.vrekt.prycia.util.Config;
 
 public class Prycia extends JavaPlugin {
 
 	private static ProtocolManager packetManager;
+	private static AdapterManager adapterManager;
+	private static CheckManager checkManager;
+	private static UserManager userManager;
+	private static PryciaManager manager;
+	private static Config config;
 	private static Plugin plugin;
 
 	public void onEnable() {
@@ -31,16 +36,18 @@ public class Prycia extends JavaPlugin {
 		// Add reference to everything.
 
 		saveDefaultConfig();
-		
+
 		plugin = this;
 		packetManager = ProtocolLibrary.getProtocolManager();
+		config = new Config();
+		checkManager = new CheckManager();
+		userManager = new UserManager();
 
-		new PacketManager();
-		new BaseListener().addListeners(this, packetManager);
+		manager = new PryciaManager();
 		
 		for (Player player : Bukkit.getOnlinePlayers()) {
 			new User(player);
-			getUserManager().add(new User(player));
+			userManager.add(new User(player));
 		}
 
 		// Register various things.
@@ -48,27 +55,12 @@ public class Prycia extends JavaPlugin {
 		this.registerCommands();
 		this.registerEvents();
 
-		// Read the config and set the values in Config class.
+		adapterManager = new AdapterManager();
+		new BaseListener().addListeners(this, packetManager);
 
-		for (CheckType ct : CheckType.values()) {
-			boolean cancel = getConfig().getBoolean(ct.toString().toLowerCase() + ".enabled.auto-ban.cancel");
-			boolean ban = getConfig().getBoolean(ct.toString().toLowerCase() + ".enabled.auto-ban");
-			boolean enabled = getConfig().getBoolean(ct.toString().toLowerCase() + ".enabled");
-			int threshold = getConfig().getInt(ct.toString().toLowerCase() + ".enabled.auto-ban.cancel.threshold");
+		// Read the config and set all values.
 
-			if (ct.equals(CheckType.REGENERATION)) {
-				boolean doEventCheck = getConfig().getBoolean(ct.toString().toLowerCase() + ".enabled.auto-ban.cancel.threshold.packet-check.event-check");
-				boolean doPacketCheck = getConfig().getBoolean(ct.toString().toLowerCase() + ".enabled.auto-ban.cancel.threshold.packet-check");
-
-				getConfigUtil().setRegenMode(doEventCheck, doPacketCheck);
-
-			}
-
-			getConfigUtil().setCheckEnabled(ct, enabled);
-			getConfigUtil().setCheckBannable(ct, ban);
-			getConfigUtil().setCheckCancellable(ct, cancel);
-			getConfigUtil().setCheckThreshold(ct, threshold);
-		}
+		getConfigUtil().writeValues();
 
 	}
 
@@ -78,7 +70,7 @@ public class Prycia extends JavaPlugin {
 
 		for (Player player : Bukkit.getOnlinePlayers()) {
 			User user = getUserManager().getUser(player.getUniqueId());
-			user.setFieldsNull();
+			user.clearData();
 			user = null;
 		}
 
@@ -87,6 +79,9 @@ public class Prycia extends JavaPlugin {
 
 		plugin = null;
 		packetManager = null;
+		adapterManager = null;
+		checkManager = null;
+		userManager = null;
 
 	}
 
@@ -102,6 +97,7 @@ public class Prycia extends JavaPlugin {
 	public void registerCommands() {
 		getCommand("management").setExecutor(new Management());
 		getCommand("cancelban").setExecutor(new CCBan());
+		getCommand("preload").setExecutor(new PReload());
 	}
 
 	// Get the plugin.
@@ -113,19 +109,19 @@ public class Prycia extends JavaPlugin {
 	// Get user manager.
 
 	public static UserManager getUserManager() {
-		return new UserManager();
+		return userManager;
 	}
 
 	// Get check manager.
 
 	public static CheckManager getCheckManager() {
-		return new CheckManager();
+		return checkManager;
 	}
 
 	// get Prycia manager.
 
 	public static PryciaManager getManager() {
-		return new PryciaManager();
+		return manager;
 	}
 
 	// get ProtocolLib manager.
@@ -134,12 +130,12 @@ public class Prycia extends JavaPlugin {
 		return packetManager;
 	}
 
-	public static PacketManager getPacketManager() {
-		return new PacketManager();
+	public static AdapterManager getAdapterManager() {
+		return adapterManager;
 	}
 
 	public static Config getConfigUtil() {
-		return new Config();
+		return config;
 	}
 
 }
