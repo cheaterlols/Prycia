@@ -1,7 +1,6 @@
 package me.vrekt.prycia.manage;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 
 import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.events.PacketEvent;

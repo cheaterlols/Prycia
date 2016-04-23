@@ -18,7 +18,7 @@ public class User {
 
 	private Player player;
 	private UUID uuid;
-	private Location location, previousLocation, blockingLocation;
+	private Location location, lastValidLocation, blockingLocation;
 	private long lastRegenerationTime, lastTeleportTime, lastUseTime;
 	private boolean isSprinting, isBlocking, isSneaking, onGround, willDebug = false;
 	private HashMap<CheckType, Integer> violationData = new HashMap<CheckType, Integer>();
@@ -31,7 +31,7 @@ public class User {
 		this.player = player;
 		this.uuid = player.getUniqueId();
 		this.location = player.getLocation();
-		this.previousLocation = player.getLocation();
+		this.lastValidLocation = player.getLocation();
 	}
 
 	public Player getPlayer() {
@@ -46,8 +46,8 @@ public class User {
 		return location;
 	}
 
-	public Location getPreviousLocation() {
-		return previousLocation;
+	public Location getValidLocation() {
+		return lastValidLocation;
 	}
 
 	public Location getBlockingLocation() {
@@ -114,8 +114,8 @@ public class User {
 		this.location = location;
 	}
 
-	public void setPreviousLocation(Location location) {
-		this.previousLocation = location;
+	public void setLastValidLocation(Location location) {
+		this.lastValidLocation = location;
 	}
 
 	public void setLastRegenerationTime(long time) {
@@ -171,7 +171,7 @@ public class User {
 		this.player = null;
 		this.uuid = null;
 		this.location = null;
-		this.previousLocation = null;
+		this.lastValidLocation = null;
 		this.onGround = false;
 		this.lastUseTime = 0l;
 		this.lastTeleportTime = 0l;
@@ -181,6 +181,9 @@ public class User {
 		this.isSneaking = false;
 		this.willDebug = false;
 		violationData.clear();
+		lastPacketTimes.clear();
+		packetAmounts.clear();
+		packetTimes.clear();
 	}
 
 }

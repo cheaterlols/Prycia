@@ -106,7 +106,7 @@ public abstract class Check {
 		}
 
 		if (getCategory().equals(Category.MOVING)) {
-			player.teleport(user.getPreviousLocation(), TeleportCause.PLUGIN);
+			player.teleport(user.getValidLocation(), TeleportCause.PLUGIN);
 		}
 
 	}

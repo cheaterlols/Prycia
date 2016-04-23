@@ -26,7 +26,7 @@ public class BlockDigAdapter extends Adapter {
 		User user = Prycia.getUserManager().getUser(player.getUniqueId());
 
 		if (packetInfo.getStatus() == PlayerDigType.RELEASE_USE_ITEM && user.isBlocking()) {
-			user.setIsBlocking(false, user.getPreviousLocation());
+			user.setIsBlocking(false, player.getLocation());
 		}
 
 	}

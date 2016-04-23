@@ -10,7 +10,7 @@ import me.vrekt.prycia.user.User;
 public class Regeneration extends Check {
 
 	public Regeneration() {
-		super(Category.FIGHT, CheckType.REGENERATION, "Checks if the player is regenerating health faster then normal.");
+		super(Category.FIGHT, CheckType.REGENERATION, "Checks if the player is regenerating health faster than normal.");
 	}
 
 	public boolean check(User user) {

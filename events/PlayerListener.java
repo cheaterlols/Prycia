@@ -7,6 +7,7 @@ import org.apache.commons.lang.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.craftbukkit.v1_8_R3.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -31,11 +32,16 @@ import me.vrekt.prycia.Prycia;
 import me.vrekt.prycia.checks.Category;
 import me.vrekt.prycia.checks.Check;
 import me.vrekt.prycia.checks.CheckType;
+import me.vrekt.prycia.checks.fight.Criticals;
 import me.vrekt.prycia.checks.fight.Reach;
 import me.vrekt.prycia.checks.fight.Regeneration;
 import me.vrekt.prycia.checks.inventory.FastConsume;
+import me.vrekt.prycia.checks.moving.Phase;
+import me.vrekt.prycia.checks.moving.Speed;
 import me.vrekt.prycia.user.User;
 import net.md_5.bungee.api.ChatColor;
+import net.minecraft.server.v1_8_R3.EntityPlayer;
+import net.minecraft.server.v1_8_R3.MobEffectList;
 
 public class PlayerListener implements Listener {
 
@@ -46,7 +52,7 @@ public class PlayerListener implements Listener {
 	private final Inventory movementInventory = Bukkit.createInventory(null, 9, ChatColor.BLUE + "Prycia Checks. [Movement]");
 	private final Inventory invInventory = Bukkit.createInventory(null, 9, ChatColor.GREEN + "Prycia Checks. [Inventory]");
 
-	@EventHandler(priority = EventPriority.LOWEST)
+	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onPlayerMove(PlayerMoveEvent event) {
 		Player player = event.getPlayer();
 		User user = Prycia.getUserManager().getUser(player.getUniqueId());
@@ -54,9 +60,15 @@ public class PlayerListener implements Listener {
 		Location to = event.getTo();
 
 		user.setPlayer(player);
-
+	
+		Phase checkInstance = (Phase) Prycia.getCheckManager().getCheck(Phase.class);
+		if(checkInstance.check(user, player, from, to)){
+			//event.setTo(from.setDirection(to.getDirection()));
+		}
+		
 		if (from.getBlockX() != to.getBlockX() || from.getBlockY() != to.getBlockY() || from.getBlockZ() != to.getBlockZ()) {
-
+			Speed speedCheck = (Speed) Prycia.getCheckManager().getCheck(Speed.class);
+			speedCheck.check(player, user, to, from);
 		}
 
 	}
@@ -126,8 +138,8 @@ public class PlayerListener implements Listener {
 		if (stackMeta.getDisplayName().contains("Invalid Action")) {
 			event.setCancelled(true);
 		}
-		
-		if(clickedItem == Material.RECORD_8){
+
+		if (clickedItem == Material.RECORD_8) {
 			event.setCancelled(true);
 		}
 
@@ -193,9 +205,9 @@ public class PlayerListener implements Listener {
 					lore.add(ChatColor.DARK_PURPLE + c.getDesc());
 					meta.setLore(lore);
 					item.setItemMeta(meta);
-					
+
 					for (int i = 0; i < 9; i++) {
-						if(fightInventory.getItem(i) == null){
+						if (fightInventory.getItem(i) == null) {
 							fightInventory.setItem(i, item);
 							break;
 						}
@@ -262,7 +274,7 @@ public class PlayerListener implements Listener {
 					item.setItemMeta(meta);
 
 					for (int i = 0; i < 9; i++) {
-						if (invInventory.getItem(i) == null ) {
+						if (invInventory.getItem(i) == null) {
 							invInventory.setItem(i, item);
 							break;
 						}
@@ -292,7 +304,7 @@ public class PlayerListener implements Listener {
 	@EventHandler
 	public void onInteract(PlayerInteractEvent event) {
 		if (event.getAction() == Action.RIGHT_CLICK_BLOCK || event.getAction() == Action.RIGHT_CLICK_AIR) {
-			if (event.getItem() != null && event.getItem().getType().isEdible()) {
+			if (event.getItem() != null && event.getItem().getType().isEdible() || event.getItem() != null && event.getItem().getType() == Material.POTION) {
 				User user = Prycia.getUserManager().getUser(event.getPlayer().getUniqueId());
 				user.setLastUseTime(System.currentTimeMillis());
 			}
@@ -318,20 +330,30 @@ public class PlayerListener implements Listener {
 		event.setCancelled(result);
 
 		user.setLastRegenerationTime(System.currentTimeMillis());
-		
+
 	}
 
 	@EventHandler
 	public void onDamage(EntityDamageByEntityEvent event) {
 
 		if (event.getDamager() instanceof Player) {
+
+			if (isCrit((Player) event.getDamager())) {
+				Criticals criticalsCheck = (Criticals) Prycia.getCheckManager().getCheck(Criticals.class);
+				event.setCancelled(criticalsCheck.check((Player) event.getDamager()));
+
+			}
+
 			User user = Prycia.getUserManager().getUser(event.getDamager().getUniqueId());
 			Reach checkInstance = (Reach) Prycia.getCheckManager().getCheck(Reach.class);
-			if (checkInstance.check((Player) event.getDamager(), user, event.getDamager().getLocation(), event.getEntity())) {
-				event.setCancelled(true);
-			}
+			boolean result = checkInstance.check((Player) event.getDamager(), user, event.getDamager().getLocation(), event.getEntity());
+			event.setCancelled(result);
 		}
 
 	}
 
+	public boolean isCrit(Player player) {
+		EntityPlayer ep = ((CraftPlayer) player).getHandle();
+		return ep.fallDistance > 0.0F && !ep.onGround && !ep.k_() && !ep.V() && !ep.hasEffect(MobEffectList.BLINDNESS) && ep.vehicle == null;
+	}
 }
