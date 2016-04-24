@@ -1,0 +1,22 @@
+import me.vrekt.prycia.checks.Category;
+import me.vrekt.prycia.checks.Check;
+import me.vrekt.prycia.checks.CheckType;
+import me.vrekt.prycia.user.User;
+
+public class NoSlowdown extends Check {
+
+	public NoSlowdown() {
+		super(Category.MOVING, CheckType.NO_SLOWDOWN, "Checks if the player is sprinting while blocking.");
+	}
+
+  /* Very bad way for checking NoSlowdown, I got bored, so I made it */
+	public boolean check(User user) {
+
+		if (user.getPlayer().isSprinting() && user.getPlayer().isBlocking()) {
+			executeActions(user.getPlayer(), user, " is blocking and sprinting.");
+			return true;
+		}
+
+		return false;
+	}
+}
