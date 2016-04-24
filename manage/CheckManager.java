@@ -10,6 +10,7 @@ import me.vrekt.prycia.checks.fight.Regeneration;
 import me.vrekt.prycia.checks.inventory.FastConsume;
 import me.vrekt.prycia.checks.moving.Phase;
 import me.vrekt.prycia.checks.moving.Speed;
+import me.vrekt.prycia.checks.moving.NoSlowdown;
 
 public class CheckManager {
 
@@ -25,6 +26,7 @@ public class CheckManager {
 		addCheck(new Reach());
 		addCheck(new Phase());
 		addCheck(new Speed());
+		addCheck(new NoSlowdown());
 	
 		
 	}
